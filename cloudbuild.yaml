@@ -48,7 +48,7 @@ steps:
         '.',
       ]
 images:
-  - 'gcr.io/$PROJECT_ID/img-studio:latest'
+  - 'europe-west4-docker.pkg.dev/$PROJECT_ID/e-dialog-imgstudio-repo/img-studio:latest'
 
 options:
   logging: CLOUD_LOGGING_ONLY
