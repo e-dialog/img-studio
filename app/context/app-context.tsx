@@ -87,28 +87,8 @@ export function ContextProvider({ children }: { children: React.ReactNode }) {
           // Locally IAP is not enabled
           fetchedUserID = process.env.NEXT_PUBLIC_TEST_DEV_USER_ID
         } else {
-          // Fetching ID via IAP
-          const response = await fetch('/api/google-auth')
-          const authParams = await response.json()
-          if (typeof authParams === 'object' && 'error' in authParams) {
-            throw Error(authParams.error)
-          }
-
-          let targetPrincipal: string
-
-          if (authParams !== undefined && authParams['targetPrincipal'] !== undefined) {
-            targetPrincipal = authParams['targetPrincipal']
-            const principalToUserFilters = process.env.NEXT_PUBLIC_PRINCIPAL_TO_USER_FILTERS
-              ? process.env.NEXT_PUBLIC_PRINCIPAL_TO_USER_FILTERS
-              : ''
-
-            principalToUserFilters
-              .split(',')
-              .forEach((filter) => (targetPrincipal = targetPrincipal.replace(filter, '')))
-          } else {
-            throw Error('An unexpected error occurred while fetching User ID')
-          }
-          fetchedUserID = targetPrincipal
+          // MODIFICATION: Bypassing IAP fetch and setting a default public user.
+          fetchedUserID = 'public_user'
         }
 
         // 2. Set GCS URI for all edited/ generated images
