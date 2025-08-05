@@ -490,8 +490,8 @@ export async function generateImage(
     // This loops through the successfully generated images and saves their metadata.
     if (enhancedImageList && appContext.exportMetaOptions) {
       for (const image of enhancedImageList) {
-        // We only save valid images, not ones that might have errors or warnings
-        if (image && !image.error && !image.warning && image.key) {
+        // CORRECTED LINE: We check only for properties that exist on the ImageI type.
+        if (image && image.key) {
           const metadataPayload = {
             ...formData, // Contains all the form fields like style, filters, etc.
             mediaToExport: image, // Contains the generated image details like gcsUri, author, etc.
@@ -690,6 +690,23 @@ export async function editImage(formData: EditImageFormI, appContext: appContext
         mode: 'Edited',
       })
 
+    // NEW CODE BLOCK STARTS HERE
+    // This loops through the successfully edited images and saves their metadata.
+    if (enhancedImageList && appContext.exportMetaOptions) {
+      for (const image of enhancedImageList) {
+        // CORRECTED LINE: We check only for properties that exist on the ImageI type.
+        if (image && image.key) {
+          const metadataPayload = {
+            ...formData, // Contains all the form fields like style, filters, etc.
+            mediaToExport: image, // Contains the generated image details like gcsUri, author, etc.
+          };
+          // Call the function to save the entry to Firestore
+          await addNewFirestoreEntry(image.key, metadataPayload, appContext.exportMetaOptions);
+        }
+      }
+    }
+    // NEW CODE BLOCK ENDS HERE
+    
     return enhancedImageList
   } catch (error) {
     console.error(error)
