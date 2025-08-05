@@ -27,6 +27,8 @@ import { decomposeUri, downloadMediaFromGcs, getSignedURL, uploadBase64Image } f
 import { getFullReferenceDescription } from '../gemini/action'
 import { appContextDataI } from '../../context/app-context'
 import { EditImageFormI } from '../edit-utils'
+// NEW: Import the function to save to Firestore
+import { addNewFirestoreEntry } from '../firestore/action'
 const { GoogleAuth } = require('google-auth-library')
 
 function cleanResult(inputString: string) {
@@ -350,13 +352,11 @@ export async function generateImage(
     }
   }
 
-  if (appContext === undefined) throw Error('No provided app context')
+  if (appContext === undefined || appContext === null) throw Error('No provided app context')
 
   // 3 - Building Imagen request body
   let generationGcsURI = ''
   if (
-    appContext === undefined ||
-    appContext === null ||
     appContext.gcsURI === undefined ||
     appContext.userID === undefined
   )
@@ -486,6 +486,23 @@ export async function generateImage(
         mode: 'Generated',
       })
 
+    // NEW CODE BLOCK STARTS HERE
+    // This loops through the successfully generated images and saves their metadata.
+    if (enhancedImageList && appContext.exportMetaOptions) {
+      for (const image of enhancedImageList) {
+        // We only save valid images, not ones that might have errors or warnings
+        if (image && !image.error && !image.warning && image.key) {
+          const metadataPayload = {
+            ...formData, // Contains all the form fields like style, filters, etc.
+            mediaToExport: image, // Contains the generated image details like gcsUri, author, etc.
+          };
+          // Call the function to save the entry to Firestore
+          await addNewFirestoreEntry(image.key, metadataPayload, appContext.exportMetaOptions);
+        }
+      }
+    }
+    // NEW CODE BLOCK ENDS HERE
+    
     return enhancedImageList
   } catch (error) {
     const errorString = error instanceof Error ? error.toString() : String(error)
@@ -531,13 +548,11 @@ export async function editImage(formData: EditImageFormI, appContext: appContext
   const modelVersion = formData['modelVersion']
   const imagenAPIurl = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/${modelVersion}:predict`
 
-  if (appContext === undefined) throw Error('No provided app context')
+  if (appContext === undefined || appContext === null) throw Error('No provided app context')
 
   // 2 - Building Imagen request body
   let editGcsURI = ''
   if (
-    appContext === undefined ||
-    appContext === null ||
     appContext.gcsURI === undefined ||
     appContext.userID === undefined
   )
