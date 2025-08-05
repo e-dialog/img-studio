@@ -13,6 +13,7 @@
 # limitations under the License.
 
 steps:
+  # Step 1: Build & push the container image
   - name: 'gcr.io/cloud-builders/docker'
     args:
       [
@@ -47,6 +48,21 @@ steps:
         '_NEXT_PUBLIC_EXPORT_FIELDS_OPTIONS_URI=${_NEXT_PUBLIC_EXPORT_FIELDS_OPTIONS_URI}',
         '.',
       ]
+  
+  # Step 2: Deploy container to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'e-dialog-imgstudio-app' # YOUR-SERVICE-NAME
+      - '--image'
+      - 'europe-west4-docker.pkg.dev/e-dialog-gen-ai/e-dialog-imgstudio-repo/img-studio:latest'
+      - '--region'
+      - 'europe-west4' # YOUR-SERVICE-REGION
+      - '--quiet'
+
+# This section specifies the image to be pushed to Artifact Registry after the build.
 images:
   - 'europe-west4-docker.pkg.dev/$PROJECT_ID/e-dialog-imgstudio-repo/img-studio:latest'
 
